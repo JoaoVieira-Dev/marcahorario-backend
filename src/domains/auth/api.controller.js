@@ -1,6 +1,8 @@
 import errorToResponse from '../../helpers/error-to-response';
 import makeToken from './utils/make-token';
 import { makeLogin, findUser } from './repository';
+const bcrypt = require('bcrypt');
+import * as Rep from './repository';
 
 const login = (req, res) => makeLogin(req.body)
   .then(async user => {
@@ -32,4 +34,23 @@ const renew = (req, res) => findUser({ id: req.user.id })
     return res.status(status).send(response);
   });
 
-export { login, renew };
+  const signup = async (req, res) => Rep.registerUser(req.body)
+  .then(async (user) => {
+    const token = makeToken(user);
+
+    return res.send({
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        is_active: user.is_active,
+      }
+    })
+  })
+  .catch((error) => {
+    const [status, response] = errorToResponse(error);
+    return res.status(status).send(response);
+  });
+
+export { login, renew, signup };

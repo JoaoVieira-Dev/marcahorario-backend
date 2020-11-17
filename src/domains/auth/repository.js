@@ -50,4 +50,32 @@ const renew = (req, res) => findUser({ id: req.user.id })
     return res.status(status).send(response);
   });
 
-export { makeLogin, findUser };
+  const registerUser = async (data, fkUser) => {
+    const userCheck = await User.query()
+      .where({
+        email: data.email,
+      })
+      .first();
+  
+    if (userCheck) {
+      throw new HttpResponseError({
+        status: 422,
+        message: 'Email já cadastrado em outro usuário.',
+      });
+    }
+  
+    const passwordHash = await bcrypt.hash(String(data.password), 10);
+  
+    const user = await User.query()
+      .insert({
+        ...data,
+        name: data.name,
+        email: data.email,
+        password: passwordHash,
+        is_active: true,
+        reset_password: false,
+      });
+    return user;
+  };
+
+export { makeLogin, findUser, registerUser };
